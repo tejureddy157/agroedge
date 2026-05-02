@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroEdge — Smart Irrigation AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --soil:    #2b1d0e;
+      --earth:   #4a2f1a;
+      --clay:    #7a4a28;
+      --moss:    #3d5c2e;
+      --leaf:    #5a8a3f;
+      --sprout:  #8bc34a;
+      --water:   #1e88e5;
+      --sky:     #64b5f6;
+      --dew:     #b3e5fc;
+      --amber:   #ffb300;
+      --rust:    #e64a19;
+      --cream:   #f5f0e8;
+      --paper:   #faf7f2;
+      --ink:     #1a1209;
+      --muted:   #8a7a6a;
+      --border:  #d4c9b8;
+      --card-bg: #ffffff;
+      --shadow:  0 2px 12px rgba(42,28,14,0.10);
+      --shadow-lg: 0 8px 32px rgba(42,28,14,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Space Mono', monospace;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND TEXTURE ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 10% 20%, rgba(61,92,46,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 90% 80%, rgba(30,136,229,0.06) 0%, transparent 60%),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a2f1a' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative; z-index: 10;
+      background: var(--soil);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+      border-bottom: 3px solid var(--sprout);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.4rem;
+      color: var(--sprout);
+      letter-spacing: 0.08em;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .logo-icon { font-size: 1.6rem; }
+
+    .header-status {
+      display: flex; align-items: center; gap: 1.4rem;
+    }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: rgba(139,195,74,0.15);
+      color: var(--sprout);
+      border: 1px solid rgba(139,195,74,0.35);
+      padding: 0.3rem 0.8rem; border-radius: 100px;
+    }
+    .pulse {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--sprout);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(1.5); }
+    }
+
+    .edge-badge {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+      background: var(--water); color: #fff;
+      padding: 0.25rem 0.7rem; border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* ── MAIN GRID ── */
+    main {
+      position: relative; z-index: 1;
+      max-width: 1280px; margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto;
+      gap: 1.25rem;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: var(--shadow-lg); }
+
+    .card-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 0.8rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .card-label::before {
+      content: ''; display: inline-block;
+      width: 8px; height: 8px; border-radius: 2px;
+    }
+    .card-label.soil::before   { background: var(--clay); }
+    .card-label.water::before  { background: var(--water); }
+    .card-label.ai::before     { background: var(--sprout); }
+    .card-label.power::before  { background: var(--amber); }
+    .card-label.latency::before { background: var(--rust); }
+    .card-label.model::before  { background: var(--moss); }
+
+    /* ── HERO CARD (DECISION) ── */
+    .card-hero {
+      grid-column: 1 / -1;
+      background: var(--soil);
+      color: var(--cream);
+      border: none;
+      padding: 2rem 2.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 2rem;
+    }
+    .card-hero .card-label { color: rgba(245,240,232,0.5); }
+    .card-hero .card-label::before { background: var(--sprout); }
+
+    .decision-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem; font-weight: 800;
+      line-height: 1.2;
+      color: var(--sprout);
+    }
+    .decision-sub { font-size: 0.82rem; color: rgba(245,240,232,0.6); margin-top: 0.4rem; }
+
+    .decision-valve {
+      display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+    }
+    .valve-ring {
+      width: 96px; height: 96px; border-radius: 50%;
+      border: 3px solid rgba(139,195,74,0.3);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .valve-ring::before {
+      content: '';
+      position: absolute; inset: 5px; border-radius: 50%;
+      background: conic-gradient(var(--sprout) var(--pct, 70%), rgba(255,255,255,0.06) 0%);
+      transition: background 1s ease;
+    }
+    .valve-inner {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--earth);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 1.1rem; color: var(--sprout);
+      z-index: 1;
+    }
+    .valve-label { font-size: 0.68rem; letter-spacing: 0.12em; color: rgba(245,240,232,0.5); text-transform: uppercase; }
+
+    /* ── METRIC CARDS ── */
+    .metric-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.6rem; font-weight: 700;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .metric-unit { font-size: 1rem; font-weight: 400; color: var(--muted); }
+    .metric-bar {
+      height: 6px; border-radius: 99px;
+      background: var(--border); margin-top: 1rem; overflow: hidden;
+    }
+    .metric-fill {
+      height: 100%; border-radius: 99px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .metric-fill.moisture { background: var(--water); }
+    .metric-fill.temp     { background: var(--amber); }
+    .metric-fill.ph       { background: var(--sprout); }
+    .metric-fill.ec       { background: var(--clay); }
+    .metric-hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.5rem; }
+
+    /* ── AI INFERENCE CARD ── */
+    .card-inference {
+      grid-column: 1 / 3;
+    }
+
+    .inference-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 0.4rem;
+    }
+
+    .inf-item {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+    }
+    .inf-key { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+    .inf-val { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; }
+    .inf-val.green  { color: var(--moss); }
+    .inf-val.blue   { color: var(--water); }
+    .inf-val.amber  { color: var(--amber); }
+    .inf-val.rust   { color: var(--rust); }
+
+    /* ── MODEL INFO ── */
+    .model-stat { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid var(--border); }
+    .model-stat:last-child { border-bottom: none; }
+    .model-key { font-size: 0.75rem; color: var(--muted); }
+    .model-val { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; }
+
+    /* ── POWER EFFICIENCY ── */
+    .power-score {
+      display: flex; align-items: flex-end; gap: 0.6rem;
+      margin-bottom: 0.8rem;
+    }
+    .power-big {
+      font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800;
+      line-height: 1; color: var(--amber);
+    }
+    .power-grade {
+      font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700;
+      background: var(--amber); color: var(--ink);
+      padding: 0.1rem 0.6rem; border-radius: 6px; margin-bottom: 0.4rem;
+    }
+
+    .power-bars { display: flex; gap: 4px; align-items: flex-end; height: 40px; margin-top: 0.6rem; }
+    .pbar {
+      width: 18px; border-radius: 4px 4px 0 0;
+      background: var(--border); transition: height 1s ease, background 0.5s;
+    }
+    .pbar.active { background: var(--amber); }
+
+    /* ── LATENCY GAUGE ── */
+    .latency-display {
+      display: flex; align-items: baseline; gap: 0.3rem;
+      margin: 0.4rem 0 1rem;
+    }
+    .latency-num {
+      font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800;
+      color: var(--rust);
+    }
+    .latency-unit { font-size: 1rem; color: var(--muted); }
+    .latency-target { font-size: 0.72rem; color: var(--muted); }
+
+    .latency-track {
+      height: 8px; background: var(--border); border-radius: 99px; overflow: hidden;
+    }
+    .latency-thumb {
+      height: 100%; background: linear-gradient(90deg, var(--sprout), var(--rust));
+      border-radius: 99px; transition: width 1s ease;
+    }
+
+    /* ── SENSOR LOG ── */
+    .card-log { grid-column: 1 / -1; }
+
+    .log-table { width: 100%; border-collapse: collapse; margin-top: 0.6rem; }
+    .log-table th {
+      font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); font-weight: 700;
+      text-align: left; padding: 0.5rem 0.8rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .log-table td {
+      font-size: 0.78rem; padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-table tr:hover td { background: var(--paper); }
+
+    .tag {
+      display: inline-block; padding: 0.2rem 0.55rem; border-radius: 4px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .tag-ok     { background: rgba(90,138,63,0.12); color: var(--moss); }
+    .tag-warn   { background: rgba(255,179,0,0.14); color: var(--amber); }
+    .tag-irrig  { background: rgba(30,136,229,0.12); color: var(--water); }
+    .tag-dry    { background: rgba(230,74,25,0.12); color: var(--rust); }
+
+    /* ── FOOTER STRIP ── */
+    .footer-strip {
+      position: relative; z-index: 1;
+      background: var(--soil); color: rgba(245,240,232,0.4);
+      font-size: 0.68rem; letter-spacing: 0.1em;
+      text-align: center; padding: 0.9rem;
+      text-transform: uppercase;
+    }
+
+    /* ── BLINK ANIM ── */
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .blink { animation: blink 1.2s step-end infinite; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr 1fr; }
+      .card-inference { grid-column: 1 / -1; }
+      .card-hero { flex-direction: column; text-align: center; }
+    }
+    @media (max-width: 600px) {
+      main { grid-template-columns: 1fr; }
+      .card-hero { grid-column: 1; }
+      .card-log  { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo">
+    <span class="logo-icon">🌱</span>
+    AgroEdge <span style="font-weight:400;opacity:.5;margin-left:.3rem">/ Edge-AI Irrigation</span>
+  </div>
+  <div class="header-status">
+    <div class="status-pill"><div class="pulse"></div> On-Device Inference</div>
+    <div class="edge-badge">No Cloud</div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main>
+
+  <!-- HERO: AI Decision -->
+  <div class="card card-hero">
+    <div>
+      <div class="card-label ai">AI Irrigation Decision</div>
+      <div class="decision-text" id="decision-text">Irrigate Zone 2 — 18 min</div>
+      <div class="decision-sub" id="decision-sub">Soil moisture critically low · pH optimal · EC elevated</div>
+    </div>
+    <div class="decision-valve">
+      <div class="valve-ring" id="valve-ring">
+        <div class="valve-inner" id="valve-pct">72%</div>
+      </div>
+      <div class="valve-label">Valve Open</div>
+    </div>
+  </div>
+
+  <!-- Soil Moisture -->
+  <div class="card">
+    <div class="card-label soil">Soil Moisture</div>
+    <div class="metric-value"><span id="moisture-val">28</span><span class="metric-unit"> %</span></div>
+    <div class="metric-bar"><div class="metric-fill moisture" id="moisture-bar" style="width:28%"></div></div>
+    <div class="metric-hint">Target: 45–65% field capacity</div>
+  </div>
+
+  <!-- Temperature -->
+  <div class="card">
+    <div class="card-label soil">Soil Temperature</div>
+    <div class="metric-value"><span id="temp-val">24.3</span><span class="metric-unit"> °C</span></div>
+    <div class="metric-bar"><div class="metric-fill temp" id="temp-bar" style="width:55%"></div></div>
+    <div class="metric-hint">Optimal: 18–27 °C</div>
+  </div>
+
+  <!-- pH -->
+  <div class="card">
+    <div class="card-label soil">Soil pH</div>
+    <div class="metric-value"><span id="ph-val">6.8</span></div>
+    <div class="metric-bar"><div class="metric-fill ph" id="ph-bar" style="width:64%"></div></div>
+    <div class="metric-hint">Optimal: 6.0–7.0</div>
+  </div>
+
+  <!-- AI Inference Detail -->
+  <div class="card card-inference">
+    <div class="card-label ai">On-Device Inference Output</div>
+    <div class="inference-grid">
+      <div class="inf-item">
+        <div class="inf-key">Predicted Need</div>
+        <div class="inf-val green" id="inf-need">HIGH</div>
+      </div>
+      <div class="inf-item">
+        <div class="inf-key">Confidence</div>
+        <div class="inf-val blue" id="inf-conf">94.2%</div>
+      </div>
+      <div class="inf-item">
+        <div class="inf-key">Water Volume</div>
+        <div class="inf-val blue" id="inf-water">3.4 L/m²</div>
+      </div>
+      <div class="inf-item">
+        <div class="inf-key">Crop Stress Index</div>
+        <div class="inf-val amber" id="inf-stress">0.61</div>
+      </div>
+      <div class="inf-item">
+        <div class="inf-key">Next Check In</div>
+        <div class="inf-val green" id="inf-next">18 min</div>
+      </div>
+      <div class="inf-item">
+        <div class="inf-key">Anomaly Detected</div>
+        <div class="inf-val green">None</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Power Efficiency -->
+  <div class="card">
+    <div class="card-label power">Power Efficiency</div>
+    <div class="power-score">
+      <div class="power-big" id="power-score">87</div>
+      <div class="power-grade">A</div>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);">Current draw: <strong id="power-draw">140 mW</strong></div>
+    <div class="power-bars" id="power-bars">
+      <!-- filled by JS -->
+    </div>
+    <div class="metric-hint" style="margin-top:.6rem">Target: &lt;200 mW steady state</div>
+  </div>
+
+  <!-- Model Info -->
+  <div class="card">
+    <div class="card-label model">Edge Model</div>
+    <div class="model-stat"><span class="model-key">Architecture</span><span class="model-val">TFLite RF + CNN</span></div>
+    <div class="model-stat"><span class="model-key">Model Size</span><span class="model-val" id="model-size">12.4 MB</span></div>
+    <div class="model-stat"><span class="model-key">Quantization</span><span class="model-val">INT8</span></div>
+    <div class="model-stat"><span class="model-key">Hardware</span><span class="model-val">Raspberry Pi 4</span></div>
+    <div class="model-stat"><span class="model-key">Runtime</span><span class="model-val">TFLite 2.13</span></div>
+  </div>
+
+  <!-- Latency -->
+  <div class="card">
+    <div class="card-label latency">Inference Latency</div>
+    <div class="latency-display">
+      <div class="latency-num" id="latency-num">42</div>
+      <div class="latency-unit">ms</div>
+    </div>
+    <div class="latency-target">Target: &lt;100 ms ✓</div>
+    <div class="latency-track" style="margin-top:.8rem">
+      <div class="latency-thumb" id="latency-bar" style="width:42%"></div>
+    </div>
+    <div class="metric-hint">100 ms = 100% of budget</div>
+  </div>
+
+  <!-- EC -->
+  <div class="card">
+    <div class="card-label soil">Electrical Conductivity</div>
+    <div class="metric-value"><span id="ec-val">1.8</span><span class="metric-unit"> dS/m</span></div>
+    <div class="metric-bar"><div class="metric-fill ec" id="ec-bar" style="width:45%"></div></div>
+    <div class="metric-hint">Target: 1.5–2.5 dS/m</div>
+  </div>
+
+  <!-- Sensor Log -->
+  <div class="card card-log">
+    <div class="card-label ai">Live Sensor + Inference Log <span class="blink">▋</span></div>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Zone</th>
+          <th>Moisture %</th>
+          <th>Temp °C</th>
+          <th>pH</th>
+          <th>EC dS/m</th>
+          <th>Decision</th>
+          <th>Latency</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="log-body">
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<div class="footer-strip">
+  AgroEdge v1.0 — On-device inference only — No cloud APIs — Raspberry Pi 4 + TFLite
+</div>
+
+<script>
+  // ── HELPERS ──
+  const rand = (lo, hi, dp=1) => +(Math.random()*(hi-lo)+lo).toFixed(dp);
+  const $ = id => document.getElementById(id);
+
+  // ── POWER BARS ──
+  function initPowerBars() {
+    const container = $('power-bars');
+    for (let i = 0; i < 10; i++) {
+      const d = document.createElement('div');
+      d.className = 'pbar' + (i < 8 ? ' active' : '');
+      d.style.height = (20 + Math.random()*20) + 'px';
+      container.appendChild(d);
+    }
+  }
+  initPowerBars();
+
+  // ── LOG ──
+  const zones = ['Zone 1','Zone 2','Zone 3'];
+  const decisions = [
+    {label:'Irrigate',cls:'tag-irrig'},
+    {label:'OK – Skip',cls:'tag-ok'},
+    {label:'Monitor',cls:'tag-warn'},
+    {label:'Dry – Urgent',cls:'tag-dry'},
+  ];
+
+  let logRows = [];
+  function addLogRow() {
+    const now = new Date();
+    const t = now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const m = rand(20,70);
+    const tp = rand(18,32);
+    const ph = rand(5.5,7.5);
+    const ec = rand(0.8,3.2);
+    const lat = rand(30,95,0);
+    const dec = decisions[Math.floor(Math.random()*decisions.length)];
+    const zone = zones[Math.floor(Math.random()*zones.length)];
+
+    logRows.unshift({t,zone,m,tp,ph,ec,lat,dec});
+    if (logRows.length > 8) logRows.pop();
+
+    const tbody = $('log-body');
+    tbody.innerHTML = logRows.map(r => `
+      <tr>
+        <td style="font-size:.7rem;color:var(--muted)">${r.t}</td>
+        <td><strong>${r.zone}</strong></td>
+        <td>${r.m}%</td>
+        <td>${r.tp}</td>
+        <td>${r.ph}</td>
+        <td>${r.ec}</td>
+        <td><span class="tag ${r.dec.cls}">${r.dec.label}</span></td>
+        <td>${r.lat} ms</td>
+        <td><span class="tag tag-ok">OK</span></td>
+      </tr>
+    `).join('');
+  }
+
+  // ── LIVE UPDATES ──
+  function tick() {
+    const moisture = rand(18, 72);
+    const temp     = rand(18, 32);
+    const ph       = rand(5.5, 7.5);
+    const ec       = rand(0.8, 3.5);
+    const latency  = rand(28, 95, 0);
+    const conf     = rand(82, 99);
+    const stress   = rand(0.1, 0.9);
+    const power    = rand(100, 195, 0);
+    const pScore   = Math.round(100 - (power - 100) / 95 * 30 + Math.random()*5);
+
+    // metrics
+    $('moisture-val').textContent = moisture;
+    $('moisture-bar').style.width = moisture + '%';
+    $('temp-val').textContent = temp;
+    $('temp-bar').style.width = (temp / 45 * 100) + '%';
+    $('ph-val').textContent = ph;
+    $('ph-bar').style.width = ((ph - 3) / 11 * 100) + '%';
+    $('ec-val').textContent = ec;
+    $('ec-bar').style.width = (ec / 5 * 100) + '%';
+
+    // latency
+    $('latency-num').textContent = latency;
+    $('latency-bar').style.width = latency + '%';
+    $('latency-bar').style.background = latency > 80
+      ? 'linear-gradient(90deg,var(--amber),var(--rust))'
+      : 'linear-gradient(90deg,var(--sprout),var(--water))';
+
+    // inference
+    $('inf-conf').textContent = conf + '%';
+    $('inf-stress').textContent = stress;
+    const waterVol = rand(1.5, 5.0);
+    $('inf-water').textContent = waterVol + ' L/m²';
+
+    const needLevel = moisture < 35 ? 'HIGH' : moisture < 55 ? 'MEDIUM' : 'LOW';
+    const needColor = moisture < 35 ? 'rust' : moisture < 55 ? 'amber' : 'green';
+    const needEl = $('inf-need');
+    needEl.textContent = needLevel;
+    needEl.className = 'inf-val ' + needColor;
+
+    // valve
+    const valvePct = moisture < 35 ? rand(60,90,0) : moisture < 55 ? rand(30,60,0) : rand(5,20,0);
+    $('valve-pct').textContent = valvePct + '%';
+    $('valve-ring').style.setProperty('--pct', valvePct + '%');
+
+    // decision hero
+    if (moisture < 35) {
+      $('decision-text').textContent = 'Irrigate Zone ' + (Math.floor(Math.random()*3)+1) + ' — ' + rand(10,25,0) + ' min';
+      $('decision-sub').textContent = 'Soil moisture critically low · EC ' + (ec > 2.5 ? 'elevated' : 'normal') + ' · Confidence ' + conf + '%';
+    } else if (moisture < 55) {
+      $('decision-text').textContent = 'Monitor — Borderline Moisture';
+      $('decision-sub').textContent = 'Soil within lower threshold · Check again in 30 min';
+    } else {
+      $('decision-text').textContent = 'No Irrigation Needed';
+      $('decision-sub').textContent = 'All parameters within optimal range · System idle';
+    }
+
+    // power
+    $('power-score').textContent = pScore;
+    $('power-draw').textContent = power + ' mW';
+
+    addLogRow();
+  }
+
+  // initial + periodic
+  tick();
+  setInterval(tick, 3000);
+</script>
+
+</body>
+</html>

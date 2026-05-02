@@ -1,0 +1,84 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  AgroEdge — Smart Irrigation with Real-Time Soil Analysis
+#  Requirements (Edge AI / Raspberry Pi 4 / No Cloud APIs)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+#  Install:
+#    pip install -r requirements.txt
+#
+#  On Raspberry Pi (ARM64 / ARMv7):
+#    pip install -r requirements.txt --extra-index-url \
+#        https://google-coral.github.io/py-repo/
+#
+#  Python: 3.10+
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Core Edge AI / ML ──────────────────────────────────────────────────────
+# TFLite Runtime (lightweight, <20 MB; no full TensorFlow needed on device)
+# Raspberry Pi / ARM:
+tflite-runtime==2.14.0
+# x86 dev/testing alternative (comment out tflite-runtime above):
+# tensorflow==2.14.0
+
+# Numerical computing
+numpy==1.26.4
+scipy==1.13.0
+
+# ── Sensor / Hardware ──────────────────────────────────────────────────────
+# GPIO (Raspberry Pi only — silently unused on other platforms)
+RPi.GPIO==0.7.1
+
+# I2C support (for sensors: ADS1115 ADC, INA219 power monitor, SHT31 humidity)
+smbus2==0.4.3
+adafruit-circuitpython-ads1x15==2.2.23
+adafruit-circuitpython-ina219==3.4.25
+adafruit-circuitpython-sht31d==2.3.20
+
+# UART (for RS-485 NPK soil sensor)
+pyserial==3.5
+
+# 1-Wire (DS18B20 soil temperature sensor)
+w1thermsensor==2.3.0
+
+# ── Web Dashboard (local, no cloud) ───────────────────────────────────────
+flask==3.0.3
+flask-cors==4.0.0
+waitress==3.0.0          # production WSGI server (no gunicorn dependency on ARM)
+
+# ── Data & Logging ────────────────────────────────────────────────────────
+pandas==2.2.2
+scikit-learn==1.4.2      # used for training & offline evaluation only
+joblib==1.4.2
+
+# SQLite time-series log (no external DB required)
+# (uses Python stdlib sqlite3 — no extra package needed)
+
+# ── Utilities ─────────────────────────────────────────────────────────────
+python-dotenv==1.0.1     # load config from .env file
+pydantic==2.7.1          # data validation for sensor readings
+schedule==1.2.2          # lightweight cron-like task scheduler
+psutil==5.9.8            # CPU / memory monitoring for power estimation
+
+# ── Model Training (run OFFLINE on workstation, not on Pi) ────────────────
+# Uncomment on development machine only:
+# tensorflow==2.14.0
+# tensorflow-model-optimization==0.8.0   # quantisation-aware training
+# matplotlib==3.9.0
+# seaborn==0.13.2
+# jupyterlab==4.2.0
+
+# ── Testing ───────────────────────────────────────────────────────────────
+pytest==8.2.0
+pytest-cov==5.0.0
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  EDGE AI CONSTRAINTS (verified at runtime in main.py)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+#  ✓ No cloud API packages (no boto3, google-cloud-*, azure-*, openai, etc.)
+#  ✓ Model size target: < 50 MB  (INT8 quantized TFLite ≈ 12 MB)
+#  ✓ Inference latency target: < 100 ms on RPi 4 (measured, asserted in code)
+#  ✓ Power budget: < 200 mW steady-state inference (monitored via INA219)
+#  ✓ All inference runs on-device CPU using tflite-runtime
+#
+# ══════════════════════════════════════════════════════════════════════════════
